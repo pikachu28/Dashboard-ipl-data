@@ -8,7 +8,6 @@ import dash_html_components as html
 ipl_data1 = pd.read_csv("https://raw.githubusercontent.com/pikachu28/ipl-saga/main/Datasets/Clean_Data.csv")
 
 app = dash.Dash(__name__,)
-server = app.server
 app.layout = html.Div([
 
 html.Div([
@@ -32,7 +31,7 @@ html.Div([
     placeholder='Select Team',
     options=[{'label':c, 'value': c}
             for c in (ipl_data1['IPL 4 Franchise'].unique())])],
-    style={'width':'10%', 'margin-left':'45%'}),
+    style={'width':'10%', 'margin-left':'20%'}),
 
 html.Div([
     html.Label('Select a Team:'),
@@ -43,7 +42,28 @@ html.Div([
     placeholder='Select Team',
     options=[{'label':c, 'value': c}
             for c in (ipl_data1['IPL 4 Franchise'].unique())])],
-    style={'width':'10%', 'margin-left':'45%'}),
+    style={'width':'10%', 'margin-left':'20%'}),
+
+html.Div([
+    html.Label('Select a Column:'),
+    dcc.Dropdown(id='col1',
+    multi=False,
+    clearable=True,
+    value='columns',
+    placeholder='Graph1',
+    options=[{'label':c, 'value': c}
+            for c in ["50 runs made", "Strike rate", "matches", "Balls faced", "Batting avg", "Is batsman","runs scored", "innings played","Nationality(1=Overseas)","4s","6s", "highest score", "Is star batsman", "Is batsman","100 runs made","Catches per match","Catches taken","Number of balls bowled","Number of balls bowled", "runs given", "Is star bowler","Retained"]])],
+    style={'width':'10%', 'margin-left':'80%', 'margin-top':'-8%'}),
+html.Div([
+    html.Label('Select a Column:'),
+    dcc.Dropdown(id='col2',
+    multi=False,
+    clearable=True,
+    value='columns',
+    placeholder='Graph1',
+    options=[{'label':c, 'value': c}
+            for c in ["50 runs made", "Strike rate", "matches", "Balls faced", "Batting avg", "Is batsman","runs scored", "innings played","Nationality(1=Overseas)","4s","6s","highest score", "Is star batsman", "Is batsman","100 runs made","Catches per match","Catches taken","Number of balls bowled","Number of balls bowled", "runs given", "Is star bowler","Retained"]])],
+    style={'width':'10%', 'margin-left':'80%'}),
 
 
 html.Div([
@@ -58,13 +78,26 @@ html.Div([
               config={'displayModeBar': False}),
  
         ],style={'margin-left': '1.4%','width': '50%', 'display': 'inline-block', 'margin-bottom':'3%'}),
-# Create bubble chart (Compare several columns)
-    # html.Div([
-    # html.Br(),
-    # dcc.Graph(id='bubble_2',
-    #           config={'displayModeBar': 'hover'}),
+html.Div([
+    html.Br(),
+    dcc.Graph(id='pie_1',
+              config={'displayModeBar': 'hover'}),
  
-    #     ],style={'margin-left': '1.4%', 'width': '50%', 'display': 'inline-block'})
+        ],style={'margin-left': '1.4%', 'width': '50%', 'display': 'inline-block'}),
+
+# html.Div([
+#     html.Br(),
+#     dcc.Graph(id='pie_2',
+#               config={'displayModeBar': 'hover'}),
+ 
+#         ],style={'margin-left': '1.4%', 'width': '50%', 'display': 'inline-block'}),
+# Create bubble chart (Compare several columns)
+# html.Div([
+#     html.Br(),
+#     dcc.Graph(id='bubble_2',
+#               config={'displayModeBar': 'hover'}),
+ 
+#         ],style={'margin-left': '1.4%', 'width': '50%', 'display': 'inline-block'}),
     html.Div([
     html.Br(),
     dcc.Graph(id='bar_bar_3',
@@ -74,20 +107,21 @@ html.Div([
 ])
 
 @app.callback(Output('bar_line_1','figure'),
-                [Input('team', 'value')])
+                [Input('team', 'value'),
+                Input('col1', 'value')])
 
-def update_graph(team):
-    data1=ipl_data1.groupby(['Team', 'IPL 4 Franchise'])['matches'].sum().reset_index()
+def update_graph(team, col1):
+    data1=ipl_data1.groupby(['Team', 'IPL 4 Franchise'])[col1].sum().reset_index()
     data2=ipl_data1.groupby(['Team', 'IPL 4 Franchise'])['Player cost USD'].mean().reset_index()
     return{
         'data': [go.Bar(x=data1[data1['IPL 4 Franchise'] == team]['Team'],
-                        y=data1[data1['IPL 4 Franchise'] == team]['matches'],
-                        text=data1[data1['IPL 4 Franchise'] == team]['matches'],
+                        y=data1[data1['IPL 4 Franchise'] == team][col1],
+                        text=data1[data1['IPL 4 Franchise'] == team][col1],
                         name='matches played',
                         texttemplate='%{text:.2s}',
                         textposition='auto',
                         marker=dict(
-                            color=data1[data1['IPL 4 Franchise'] == team]['matches'],
+                            color=data1[data1['IPL 4 Franchise'] == team][col1],
                             colorscale='phase',
                             showscale=False),
                         yaxis='y1',
@@ -95,7 +129,7 @@ def update_graph(team):
                         hoverinfo='text',
                         hovertext=
                         '<b>Team Name</b>: ' + data1[data1['IPL 4 Franchise'] == team]['IPL 4 Franchise'].astype(str) + '<br>'+
-                        '<b>Player Cost</b>: ' + [f'{x:,.0f}' for x in data1[data1['IPL 4 Franchise'] == team]['matches']] + '<br>'+
+                        '<b>Column </b>: ' + [f'{x:,.0f}' for x in data1[data1['IPL 4 Franchise'] == team][col1]] + '<br>'+
                         '<b>Country</b>: ' + data1[data1['IPL 4 Franchise'] == team]['Team'].astype(str) + '<br>'
  
  
@@ -118,7 +152,7 @@ def update_graph(team):
              width=780,
              height=520,
              title={
-                'text': 'Matches Played and Average player cost : ' + (team),
+                'text':  (col1) + ' and Average player cost : ' + (team),
                 'y': 0.93,
                 'x': 0.43,
                 'xanchor': 'center',
@@ -144,7 +178,7 @@ def update_graph(team):
  
                 ),
  
-             yaxis=dict(title='<b>Matches Played</b>',
+             yaxis=dict(title='<b>'+ col1 + '</b>',
                         color='rgb(230, 34, 144)',
                         showline=True,
                         showgrid=True,
@@ -294,97 +328,99 @@ def update_graph(team, team2):
 # @app.callback(Output('bubble_2','figure'),
 #                 [Input('team', 'value')])
 # def update_graph(team):
-#     data4 = ipl_data1.groupby(['Player cost USD','IPL 4 Franchise'])[['Batting avg','Bowling average']].sum().reset_index()
+#     data4 = ipl_data1.groupby(['IPL 4 Franchise'])[['Player cost USD','Batting avg','Bowling average']].sum().reset_index()
+#     size = data4[(data4['IPL 4 Franchise'] == team)]['Player cost USD']
 #     return {
 #         'data' : [go.Scatter(x=data4[data4['IPL 4 Franchise'] == team]['Batting avg'],
 #                              y=data4[data4['IPL 4 Franchise'] == team]['Bowling average'],
-#                              text=data4[data4['IPL 4 Franchise'] == team]['Bowling average'],
-#                              mode='markers',
-#                              name=team,
-#                              hoverinfo='text',
-#                              hovertext=
-#                              '<b>Batting avg</b>'+data4[data4['IPL 4 Franchise'] == team]['Batting avg'] + '<br>'+
-#                              '<b>bowling avg</b>'+data4[data4['IPL 4 Franchise'] == team]['Bowling average'] + '<br>',
+#                             #  text=data4[data4['IPL 4 Franchise'] == team]['Bowling average'],
+#                             #  mode='markers',
+#                             #  name='team',
+#                             #  hoverinfo='text',
+#                             #  hovertext=
+#                             #  '<b>Batting avg</b>'+data4[data4['IPL 4 Franchise'] == team]['Batting avg'] + '<br>'+
+#                             #  '<b>bowling avg</b>'+data4[data4['IPL 4 Franchise'] == team]['Bowling average'] + '<br>',
 #                              marker=dict(
-#                                 size=data4[(data4['IPL 4 Franchise'] == team)]['Bowling average'],
-#                                 color=data4[(data4['IPL 4 Franchise'] == team)]['Bowling average'],
-#                                 colorscale='mrybm',
-#                                 showscale=False
-#                              ),
+            #                     size=size,
+            #                     color=data4[(data4['IPL 4 Franchise'] == team)]['Player cost USD'],
+            #                     colorscale='mrybm',
+            #                     showscale=False
+            #                  ),
                             
-#                             )],
-#             'layout': go.Layout(
-#              width=780,
-#              height=520,
-#              title={
-#                 'text': 'Bubble chart: ' + (team),
-#                 'y': 0.93,
-#                 'x': 0.43,
-#                 'xanchor': 'center',
-#                 'yanchor': 'top'},
-#              titlefont={'family': 'Oswald',
-#                         'color': 'rgb(230, 34, 144)',
-#                         'size': 25},
+            #                 )],
+            # 'layout': go.Layout(
+            #  width=780,
+            #  height=520,
+            #  title={
+            #     'text': 'Bubble chart: ' + (team),
+            #     'y': 0.93,
+            #     'x': 0.43,
+            #     'xanchor': 'center',
+            #     'yanchor': 'top'},
+            #  titlefont={'family': 'Oswald',
+            #             'color': 'rgb(230, 34, 144)',
+            #             'size': 25},
  
-#              hovermode='closest',
+            #  hovermode='closest',
  
-#              xaxis=dict(title='<b>Batting Avg</b>',
+            #  xaxis=dict(title='<b>Batting Avg</b>',
  
-#                         color='rgb(230, 34, 144)',
-#                         showline=True,
-#                         showgrid=True,
-#                         showticklabels=True,
-#                         linecolor='rgb(104, 204, 104)',
-#                         linewidth=2,
-#                         ticks='outside',
-#                         tickfont=dict(
-#                             family='Arial',
-#                             size=12,
-#                             color='rgb(17, 37, 239)'
-#                         )
+            #             color='rgb(230, 34, 144)',
+            #             showline=True,
+            #             showgrid=True,
+            #             showticklabels=True,
+            #             linecolor='rgb(104, 204, 104)',
+            #             linewidth=2,
+            #             ticks='outside',
+            #             tickfont=dict(
+            #                 family='Arial',
+            #                 size=12,
+            #                 color='rgb(17, 37, 239)'
+    #                     )
  
-#                 ),
-#                 yaxis=dict(title='<b>Bowling Avg</b>',
-#                         color='rgb(230, 34, 144)',
-#                         showline=True,
-#                         showgrid=True,
-#                         showticklabels=True,
-#                         linecolor='rgb(104, 204, 104)',
-#                         linewidth=2,
-#                         ticks='outside',
-#                         tickfont=dict(
-#                            family='Arial',
-#                            size=12,
-#                            color='rgb(17, 37, 239)'
-#                         )
+    #             ),
+    #             yaxis=dict(title='<b>Bowling Avg</b>',
+    #                     color='rgb(230, 34, 144)',
+    #                     showline=True,
+    #                     showgrid=True,
+    #                     showticklabels=True,
+    #                     linecolor='rgb(104, 204, 104)',
+    #                     linewidth=2,
+    #                     ticks='outside',
+    #                     tickfont=dict(
+    #                        family='Arial',
+    #                        size=12,
+    #                        color='rgb(17, 37, 239)'
+    #                     )
  
-#                 ),
-#                   legend=dict(title='',
-#                          x=0.25,
-#                          y=1.08,
-#                          orientation='h',
-#                          bgcolor='rgba(255, 255, 255, 0)',
-#                          traceorder="normal",
-#                          font=dict(
-#                             family="sans-serif",
-#                             size=12,
-#                             color='#000000')),
+    #             ),
+    #               legend=dict(title='',
+    #                      x=0.25,
+    #                      y=1.08,
+    #                      orientation='h',
+    #                      bgcolor='rgba(255, 255, 255, 0)',
+    #                      traceorder="normal",
+    #                      font=dict(
+    #                         family="sans-serif",
+    #                         size=12,
+    #                         color='#000000')),
 
-#         )
-#     }
+    #     )
+    # }
 
 
 @app.callback(Output('bar_bar_3', 'figure'),
-                        [Input('team', 'value')])
+                        [Input('col1', 'value'),
+                        Input('col2', 'value')])
 
-def update_graph(team):
-    data5 = ipl_data1.groupby(['IPL 4 Franchise'])['4s'].sum().reset_index()
-    data6 = ipl_data1.groupby(['IPL 4 Franchise'])['6s'].sum().reset_index()
+def update_graph(col1, col2):
+    data5 = ipl_data1.groupby(['IPL 4 Franchise'])[col1].sum().reset_index()
+    data6 = ipl_data1.groupby(['IPL 4 Franchise'])[col2].sum().reset_index()
     return{
         'data' : [go.Bar(x = data5['IPL 4 Franchise'],
-                         y = data5['4s'],
-                         text = data5['4s'],
-                         name = ' Avg number of 4s',
+                         y = data5[col1],
+                         text = data5[col1],
+                         name = 'Sum of '+(col1),
                          texttemplate = '%{text: .2s}',
                          textposition = 'auto',
                          marker = dict(color='rgb(214, 137, 16)'),
@@ -393,13 +429,13 @@ def update_graph(team):
                          hoverinfo='text',
                          hovertext=
                          '<b>Team</b>: ' + data5['IPL 4 Franchise'].astype(str) + '<br>'+
-                        '<b>Total number of 4s</b>: $' + [f'{x:,.0f}' for x in data5['4s']] + '<br>'
+                        '<b>Left y-axis</b>: $' + [f'{x:,.0f}' for x in data5[col1]] + '<br>'
                          ),
                   go.Bar(
                       x=data6['IPL 4 Franchise'],
-                      y=data6['6s'],
-                      name='Avg number of 6s',
-                      text=data6['6s'],
+                      y=data6[col2],
+                      name='Sum of '+(col2),
+                      text=data6[col2],
                       texttemplate='%{text:.2s}',
                       textposition='auto',
                       marker=dict(color='rgb(112, 123, 124)'),
@@ -408,13 +444,13 @@ def update_graph(team):
                       hoverinfo='text',
                       hovertext=
                       '<b>Team</b>: ' + data6['IPL 4 Franchise'].astype(str) + '<br>'+
-                       '<b>Total number of 6s</b>: ' + [f'{x:,.0f}' for x in data6['6s']] + '<br>'
+                       '<b>Right y-axis</b>: ' + [f'{x:,.0f}' for x in data6[col2]] + '<br>'
                   )],
                   'layout': go.Layout(
              width=780,
              height=520,
              title={
-                'text': 'Total number of 4s v/s 6s for every team',
+                'text': 'Total number of ' + (col1) + ' v/s ' + (col2) + ' for every team',
                 'y': 0.93,
                 'x': 0.43,
                 'xanchor': 'center',
@@ -440,7 +476,7 @@ def update_graph(team):
                         )
                     ),
  
-             yaxis=dict(title='<b>Total number of 4s in each team</b>',
+             yaxis=dict(title='<b>Total ' + col1 + ' in each team </b>',
                         color='rgb(230, 34, 144)',
                         showline=True,
                         showgrid=True,
@@ -455,7 +491,7 @@ def update_graph(team):
                         )
  
                 ),
-             yaxis2=dict(title='<b>Total number of 6s in each team</b>', overlaying='y', side='right',
+             yaxis2=dict(title='<b>Total ' + col2 + ' in each team </b>', overlaying='y', side='right',
                          color='rgb(230, 34, 144)',
                          showline=True,
                          showgrid=False,
@@ -488,7 +524,89 @@ def update_graph(team):
                  )
     }
 
+# Create pie chart 1
+@app.callback(Output('pie_1', 'figure'),
+              [Input('team', 'value')])
+def display_content(team):
+    retained = ipl_data1.loc[ipl_data1['Retained'] == 0].count()[0]
+    notRetained = ipl_data1.loc[ipl_data1['Retained'] == 1].count()[0]
+ 
+    return {
+        'data': [go.Pie(labels=['retained', 'notRetained'],
+                        values=[retained, notRetained],
+                        hoverinfo='label+value+percent',
+                        textinfo='label+value',
+                        textposition='auto',
+                        textfont=dict(size=13),
+                        insidetextorientation='radial',
+                        rotation=70,
+ 
+                        )],
+ 
+        'layout': go.Layout(
+            width=780,
+            height=520,
+            hovermode='closest',
+            title={
+                'text': 'Retained or not',
+                'y': 0.93,
+                'x': 0.43,
+                'xanchor': 'center',
+                'yanchor': 'top'},
+            titlefont={'family': 'Oswald',
+                   'color': 'rgb(230, 34, 144)',
+                   'size': 25},
+            legend={
+                'orientation': 'h',
+                'bgcolor': 'rgba(255,255,255,0)',
+                'xanchor': 'center', 'x': 0.5, 'y': -0.05},
+            ),
+ 
+ 
+        }
 
+# Create pie chart 2
+# @app.callback(Output('pie_2', 'figure'),
+#               [Input('team', 'value')])
+# def display_content(team):
+#     data7 = ipl_data1.groupby(['IPL 4 Franchise', 'matches'])['50 runs made'].mean().reset_index()
+#     data8 = data7[data7['IPL 4 Franchise']==team]['50 runs made']
+#     retained = data8.loc[data8['Retained'] == 0].count()[0]
+#     notRetained = data8.loc[data8['Retained'] == 1].count()[0]
+ 
+#     return {
+#         'data': [go.Pie(labels=['retained', 'notRetained'],
+#                         values=[retained, notRetained],
+#                         hoverinfo='label+value+percent',
+#                         textinfo='label+value',
+#                         textposition='auto',
+        #                 textfont=dict(size=13),
+        #                 insidetextorientation='radial',
+        #                 rotation=70,
+ 
+        #                 )],
+ 
+        # 'layout': go.Layout(
+        #     width=780,
+        #     height=520,
+        #     hovermode='closest',
+        #     title={
+        #         'text': 'Status of each product',
+        #         'y': 0.93,
+        #         'x': 0.43,
+        #         'xanchor': 'center',
+        #         'yanchor': 'top'},
+        #     titlefont={'family': 'Oswald',
+        #            'color': 'rgb(230, 34, 144)',
+        #            'size': 25},
+        #     legend={
+        #         'orientation': 'h',
+        #         'bgcolor': 'rgba(255,255,255,0)',
+        #         'xanchor': 'center', 'x': 0.5, 'y': -0.05},
+        #     ),
+ 
+ 
+        # }
 
 
 
