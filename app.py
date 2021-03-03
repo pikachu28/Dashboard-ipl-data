@@ -8,6 +8,7 @@ import dash_html_components as html
 ipl_data1 = pd.read_csv("https://raw.githubusercontent.com/pikachu28/ipl-saga/main/Datasets/Clean_Data.csv")
 
 app = dash.Dash(__name__,)
+server = app.server
 app.layout = html.Div([
 
 html.Div([
